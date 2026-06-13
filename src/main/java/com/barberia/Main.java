@@ -1,5 +1,8 @@
 package com.barberia;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -22,9 +25,12 @@ public class Main {
                 case "1":
                     System.out.println("\n--- Novo Agendamento ---");
                     Cliente cliente = cadastrarCliente(leitor);
-                    Agendamento agendamento = cadastrarAgendamento(leitor, cliente);
-                    listaAgendamentos.add(agendamento);
-                    System.out.println("\nAgendamento salvo com sucesso!");
+                    Agendamento agendamento = cadastrarAgendamento(leitor, cliente, listaAgendamentos);
+
+                    if (agendamento != null) {
+                        listaAgendamentos.add(agendamento);
+                        System.out.println("\nAgendamento salvo com sucesso!");
+                    }
                     break;
                 case "2":
                     exibirAgendamentos(listaAgendamentos);
@@ -58,9 +64,7 @@ public class Main {
             System.out.print("Digite o telefone (11 dígitos, apenas números): ");
             tel = leitor.nextLine().trim();
 
-            // \d{11} garante que sejam exatamente 11 caracteres numéricos (0-9)
             if (tel.matches("\\d{11}")) {
-                // Formata o número de 11912345678 para (11) 91234-5678 antes de salvar
                 tel = "(" + tel.substring(0, 2) + ") " + tel.substring(2, 7) + "-" + tel.substring(7);
                 break;
             }
@@ -70,15 +74,31 @@ public class Main {
         return new Cliente(nome, tel);
     }
 
-    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente) {
-        String data;
+    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, ArrayList<Agendamento> listaAtual) {
+        String dataInput;
+        String dataFormatada = "";
+        DateTimeFormatter formatadorInput = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter formatadorExibicao = DateTimeFormatter.ofPattern("dd/MM");
+
         while (true) {
             System.out.print("Digite a data (ex: 12/06): ");
-            data = leitor.nextLine().trim();
-            if (data.matches("(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])")) {
+            dataInput = leitor.nextLine().trim();
+
+            String dataCompleta = dataInput + "/" + LocalDate.now().getYear();
+
+            try {
+                LocalDate dataValida = LocalDate.parse(dataCompleta, formatadorInput);
+
+                if (dataValida.isBefore(LocalDate.now())) {
+                    System.out.println("Erro: Não é possível agendar uma data que já passou!");
+                    continue;
+                }
+
+                dataFormatada = dataValida.format(formatadorExibicao);
                 break;
+            } catch (DateTimeParseException e) {
+                System.out.println("Erro: Data inválida ou inexistente no calendário! Use o padrão DD/MM.");
             }
-            System.out.println("Erro: Data inválida! Use o padrão DD/MM com dias (01-31) e meses (01-12).");
         }
 
         String horario;
@@ -88,7 +108,15 @@ public class Main {
             if (horario.matches("([01][0-9]|2[0-3]):[0-5][0-9]")) {
                 break;
             }
-            System.out.println("Erro: Horário inválido! Use o padrão HH:MM com horas (00-23) e minutos (00-59).");
+            System.out.println("Erro: Horário inválido! Use o padrão HH:MM.");
+        }
+
+        for (Agendamento a : listaAtual) {
+            if (a.getData().equals(dataFormatada) && a.getHorario().equals(horario)) {
+                System.out.println("\n❌ Erro: Esse horário já está ocupado por outro cliente nesta data!");
+                System.out.println("Agendamento cancelado. Tente iniciar o processo novamente escolhendo outro horário.");
+                return null;
+            }
         }
 
         String servico;
@@ -104,7 +132,7 @@ public class Main {
             System.out.println("Erro: Serviço inválido! Escolha apenas entre Cabelo, Barba ou Completo.");
         }
 
-        return new Agendamento(cliente, data, horario, servico);
+        return new Agendamento(cliente, dataFormatada, horario, servico);
     }
 
     private static void exibirAgendamentos(ArrayList<Agendamento> lista) {

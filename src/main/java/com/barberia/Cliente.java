@@ -2,26 +2,26 @@ package com.barberia;
 
 public class Cliente {
     private String nome;
-    private String tel;
+    private String telefone;
 
-    public Cliente(String nome, String tel){
+    public Cliente(String nome, String telefone) {
         this.nome = nome;
-        this.tel = tel;
+        this.telefone = telefone;
     }
 
-    public String getNome(){
+    public String getNome() {
         return nome;
     }
 
-    public void setNome(String nome){
+    public void setNome(String nome) {
         this.nome = nome;
     }
 
-    public String getTel(){
-        return tel;
+    public String getTelefone() {
+        return telefone;
     }
 
-    public void setTel(String tel){
-        this.tel = tel;
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
     }
 }
