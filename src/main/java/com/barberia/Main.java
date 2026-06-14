@@ -1,5 +1,10 @@
 package com.barberia;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -7,9 +12,14 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
+    private static final String ARQUIVO_DADOS = "agendamentos.txt";
+
     public static void main(String[] args) {
         Scanner leitor = new Scanner(System.in);
         ArrayList<Agendamento> listaAgendamentos = new ArrayList<>();
+
+        carregarDadosDoArquivo(listaAgendamentos);
+
         boolean executarSistema = true;
 
         while (executarSistema) {
@@ -29,7 +39,8 @@ public class Main {
 
                     if (agendamento != null) {
                         listaAgendamentos.add(agendamento);
-                        System.out.println("\nAgendamento salvo com sucesso!");
+                        salvarDadoNoArquivo(agendamento);
+                        System.out.println("\nAgendamento salvo com sucesso e gravado em disco!");
                     }
                     break;
                 case "2":
@@ -144,9 +155,39 @@ public class Main {
         System.out.println("\n=== TODOS OS AGENDAMENTOS ===");
         for (Agendamento a : lista) {
             System.out.println("Cliente: " + a.getCliente().getNome() +
+                    " | Telefone: " + a.getCliente().getTelefone() +
                     " | Data: " + a.getData() +
                     " | Horário: " + a.getHorario() +
                     " | Serviço: " + a.getServico());
+        }
+    }
+
+    private static void salvarDadoNoArquivo(Agendamento agendamento) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ARQUIVO_DADOS, true))) {
+            String linha = agendamento.getCliente().getNome() + ";" +
+                    agendamento.getCliente().getTelefone() + ";" +
+                    agendamento.getData() + ";" +
+                    agendamento.getHorario() + ";" +
+                    agendamento.getServico();
+            writer.write(linha);
+            writer.newLine();
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar o agendamento no arquivo local.");
+        }
+    }
+
+    private static void carregarDadosDoArquivo(ArrayList<Agendamento> lista) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_DADOS))) {
+            String linha;
+            while ((linha = reader.readLine()) != null) {
+                String[] partes = linha.split(";");
+                if (partes.length == 5) {
+                    Cliente cliente = new Cliente(partes[0], partes[1]);
+                    Agendamento agendamento = new Agendamento(cliente, partes[2], partes[3], partes[4]);
+                    lista.add(agendamento);
+                }
+            }
+        } catch (IOException e) {
         }
     }
 }
