@@ -1,25 +1,14 @@
 package com.barberia;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
-    private static final String ARQUIVO_DADOS = "agendamentos.txt";
-
     public static void main(String[] args) {
         Scanner leitor = new Scanner(System.in);
-        ArrayList<Agendamento> listaAgendamentos = new ArrayList<>();
-
-        carregarDadosDoArquivo(listaAgendamentos);
-
+        GerenciadorAgendamentos gerenciador = new GerenciadorAgendamentos();
         boolean executarSistema = true;
 
         while (executarSistema) {
@@ -35,16 +24,14 @@ public class Main {
                 case "1":
                     System.out.println("\n--- Novo Agendamento ---");
                     Cliente cliente = cadastrarCliente(leitor);
-                    Agendamento agendamento = cadastrarAgendamento(leitor, cliente, listaAgendamentos);
+                    Agendamento agendamento = cadastrarAgendamento(leitor, cliente, gerenciador);
 
-                    if (agendamento != null) {
-                        listaAgendamentos.add(agendamento);
-                        salvarDadoNoArquivo(agendamento);
+                    if (gerenciador.adicionar(agendamento)) {
                         System.out.println("\nAgendamento salvo com sucesso e gravado em disco!");
                     }
                     break;
                 case "2":
-                    exibirAgendamentos(listaAgendamentos);
+                    exibirAgendamentos(gerenciador);
                     break;
                 case "3":
                     System.out.println("\nSistema encerrado. Obrigado e bom trabalho!");
@@ -85,7 +72,7 @@ public class Main {
         return new Cliente(nome, tel);
     }
 
-    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, ArrayList<Agendamento> listaAtual) {
+    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, GerenciadorAgendamentos gerenciador) {
         String dataInput;
         String dataFormatada = "";
         DateTimeFormatter formatadorInput = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -122,12 +109,10 @@ public class Main {
             System.out.println("Erro: Horário inválido! Use o padrão HH:MM.");
         }
 
-        for (Agendamento a : listaAtual) {
-            if (a.getData().equals(dataFormatada) && a.getHorario().equals(horario)) {
-                System.out.println("\n❌ Erro: Esse horário já está ocupado por outro cliente nesta data!");
-                System.out.println("Agendamento cancelado. Tente iniciar o processo novamente escolhendo outro horário.");
-                return null;
-            }
+        if (!gerenciador.horarioDisponivel(dataFormatada, horario)) {
+            System.out.println("\n❌ Erro: Esse horário já está ocupado por outro cliente nesta data!");
+            System.out.println("Agendamento cancelado. Tente iniciar o processo novamente escolhendo outro horário.");
+            return null;
         }
 
         String servico;
@@ -146,48 +131,19 @@ public class Main {
         return new Agendamento(cliente, dataFormatada, horario, servico);
     }
 
-    private static void exibirAgendamentos(ArrayList<Agendamento> lista) {
-        if (lista.isEmpty()) {
+    private static void exibirAgendamentos(GerenciadorAgendamentos gerenciador) {
+        if (gerenciador.getLista().isEmpty()) {
             System.out.println("\nNenhum agendamento encontrado na lista.");
             return;
         }
 
         System.out.println("\n=== TODOS OS AGENDAMENTOS ===");
-        for (Agendamento a : lista) {
+        for (Agendamento a : gerenciador.getLista()) {
             System.out.println("Cliente: " + a.getCliente().getNome() +
                     " | Telefone: " + a.getCliente().getTelefone() +
                     " | Data: " + a.getData() +
                     " | Horário: " + a.getHorario() +
                     " | Serviço: " + a.getServico());
-        }
-    }
-
-    private static void salvarDadoNoArquivo(Agendamento agendamento) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ARQUIVO_DADOS, true))) {
-            String linha = agendamento.getCliente().getNome() + ";" +
-                    agendamento.getCliente().getTelefone() + ";" +
-                    agendamento.getData() + ";" +
-                    agendamento.getHorario() + ";" +
-                    agendamento.getServico();
-            writer.write(linha);
-            writer.newLine();
-        } catch (IOException e) {
-            System.out.println("Erro ao salvar o agendamento no arquivo local.");
-        }
-    }
-
-    private static void carregarDadosDoArquivo(ArrayList<Agendamento> lista) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(ARQUIVO_DADOS))) {
-            String linha;
-            while ((linha = reader.readLine()) != null) {
-                String[] partes = linha.split(";");
-                if (partes.length == 5) {
-                    Cliente cliente = new Cliente(partes[0], partes[1]);
-                    Agendamento agendamento = new Agendamento(cliente, partes[2], partes[3], partes[4]);
-                    lista.add(agendamento);
-                }
-            }
-        } catch (IOException e) {
         }
     }
 }
