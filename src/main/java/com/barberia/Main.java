@@ -15,7 +15,8 @@ public class Main {
             System.out.println("\n========== SISTEMA DE BARBEARIA ==========");
             System.out.println("1. Cadastrar Novo Agendamento");
             System.out.println("2. Listar Todos os Agendamentos");
-            System.out.println("3. Sair do Sistema");
+            System.out.println("3. Cancelar um Agendamento");
+            System.out.println("4. Sair do Sistema");
             System.out.print("Escolha uma opção: ");
 
             String opcao = leitor.nextLine().trim();
@@ -34,11 +35,28 @@ public class Main {
                     exibirAgendamentos(gerenciador);
                     break;
                 case "3":
+                    System.out.println("\n--- Cancelar Agendamento ---");
+                    System.out.print("Digite o nome exato do cliente: ");
+                    String nomeCancelamento = leitor.nextLine().trim();
+
+                    System.out.print("Digite a data (ex: 12/06): ");
+                    String dataCancelamento = leitor.nextLine().trim();
+
+                    System.out.print("Digite o horário (ex: 14:30): ");
+                    String horarioCancelamento = leitor.nextLine().trim();
+
+                    if (gerenciador.cancelar(nomeCancelamento, dataCancelamento, horarioCancelamento)) {
+                        System.out.println("\nAgendamento cancelado e removido do disco com sucesso!");
+                    } else {
+                        System.out.println("\nErro: Nenhum agendamento encontrado com esses dados.");
+                    }
+                    break;
+                case "4":
                     System.out.println("\nSistema encerrado. Obrigado e bom trabalho!");
                     executarSistema = false;
                     break;
                 default:
-                    System.out.println("Erro: Opção inválida! Escolha um número de 1 a 3.");
+                    System.out.println("Erro: Opção inválida! Escolha um número de 1 a 4.");
                     break;
             }
         }

@@ -65,4 +65,33 @@ public class GerenciadorAgendamentos {
         } catch (IOException e) {
         }
     }
+    public boolean cancelar(String nomeCliente, String data, String horario) {
+        for (Agendamento a : listaAgendamentos) {
+            if (a.getCliente().getNome().equalsIgnoreCase(nomeCliente) &&
+                    a.getData().equals(data) &&
+                    a.getHorario().equals(horario)) {
+
+                listaAgendamentos.remove(a);
+                atualizarArquivoCompleto();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void atualizarArquivoCompleto() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ARQUIVO_DADOS, false))) {
+            for (Agendamento a : listaAgendamentos) {
+                String linha = a.getCliente().getNome() + ";" +
+                        a.getCliente().getTelefone() + ";" +
+                        a.getData() + ";" +
+                        a.getHorario() + ";" +
+                        a.getServico();
+                writer.write(linha);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Erro ao atualizar o arquivo de dados.");
+        }
+    }
 }
