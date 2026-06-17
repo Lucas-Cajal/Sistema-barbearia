@@ -8,7 +8,7 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         Scanner leitor = new Scanner(System.in);
-        GerenciadorAgendamentos gerenciador = new GerenciadorAgendamentos();
+        AgendamentoRepository gerenciador = new ArquivoAgendamentoRepository();
         boolean executarSistema = true;
 
         while (executarSistema) {
@@ -90,7 +90,7 @@ public class Main {
         return new Cliente(nome, tel);
     }
 
-    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, GerenciadorAgendamentos gerenciador) {
+    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, AgendamentoRepository gerenciador) {
         String dataInput;
         String dataFormatada = "";
         DateTimeFormatter formatadorInput = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -149,7 +149,7 @@ public class Main {
         return new Agendamento(cliente, dataFormatada, horario, servico);
     }
 
-    private static void exibirAgendamentos(GerenciadorAgendamentos gerenciador) {
+    private static void exibirAgendamentos(AgendamentoRepository gerenciador) {
         if (gerenciador.getLista().isEmpty()) {
             System.out.println("\nNenhum agendamento encontrado na lista.");
             return;
