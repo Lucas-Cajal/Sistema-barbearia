@@ -16,7 +16,8 @@ public class Main {
             System.out.println("1. Cadastrar Novo Agendamento");
             System.out.println("2. Listar Todos os Agendamentos");
             System.out.println("3. Cancelar um Agendamento");
-            System.out.println("4. Sair do Sistema");
+            System.out.println("4. Bloquear Data (Modo Barbeiro)");
+            System.out.println("5. Sair do Sistema");
             System.out.print("Escolha uma opção: ");
 
             String opcao = leitor.nextLine().trim();
@@ -27,7 +28,7 @@ public class Main {
                     Cliente cliente = cadastrarCliente(leitor);
                     Agendamento agendamento = cadastrarAgendamento(leitor, cliente, gerenciador);
 
-                    if (gerenciador.adicionar(agendamento)) {
+                    if (agendamento != null && gerenciador.adicionar(agendamento)) {
                         System.out.println("\nAgendamento salvo com sucesso e gravado em disco!");
                     }
                     break;
@@ -52,11 +53,19 @@ public class Main {
                     }
                     break;
                 case "4":
+                    System.out.println("\n--- Bloquear Data de Expediente ---");
+                    String dataTrava = validarFormatacaoData(leitor);
+                    System.out.print("Digite o recado/motivo do bloqueio: ");
+                    String recado = leitor.nextLine().trim();
+                    gerenciador.travarData(dataTrava, recado);
+                    System.out.println("\nAviso registrado! A data " + dataTrava + " está oficialmente bloqueada.");
+                    break;
+                case "5":
                     System.out.println("\nSistema encerrado. Obrigado e bom trabalho!");
                     executarSistema = false;
                     break;
                 default:
-                    System.out.println("Erro: Opção inválida! Escolha um número de 1 a 4.");
+                    System.out.println("Erro: Opção inválida! Escolha um número de 1 a 5.");
                     break;
             }
         }
@@ -90,46 +99,65 @@ public class Main {
         return new Cliente(nome, tel);
     }
 
-    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, AgendamentoRepository gerenciador) {
-        String dataInput;
-        String dataFormatada = "";
+    private static String validarFormatacaoData(Scanner leitor) {
         DateTimeFormatter formatadorInput = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         DateTimeFormatter formatadorExibicao = DateTimeFormatter.ofPattern("dd/MM");
-
         while (true) {
             System.out.print("Digite a data (ex: 12/06): ");
-            dataInput = leitor.nextLine().trim();
-
+            String dataInput = leitor.nextLine().trim();
             String dataCompleta = dataInput + "/" + LocalDate.now().getYear();
-
             try {
                 LocalDate dataValida = LocalDate.parse(dataCompleta, formatadorInput);
-
                 if (dataValida.isBefore(LocalDate.now())) {
-                    System.out.println("Erro: Não é possível agendar uma data que já passou!");
+                    System.out.println("Erro: Não é possível usar uma data que já passou!");
                     continue;
                 }
-
-                dataFormatada = dataValida.format(formatadorExibicao);
-                break;
+                return dataValida.format(formatadorExibicao);
             } catch (DateTimeParseException e) {
-                System.out.println("Erro: Data inválida ou inexistente no calendário! Use o padrão DD/MM.");
+                System.out.println("Erro: Data inválida ou inexistente! Use o padrão DD/MM.");
             }
+        }
+    }
+
+    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, AgendamentoRepository gerenciador) {
+        String dataFormatada = validarFormatacaoData(leitor);
+
+        String recadoBloqueio = gerenciador.obterRecadoDaDataBloqueada(dataFormatada);
+        if (recadoBloqueio != null) {
+            System.out.println("\n🚫 Atenção: Esta data está fechada pelo barbeiro!");
+            System.out.println("Motivo: " + recadoBloqueio);
+            return null;
         }
 
         String horario;
         while (true) {
-            System.out.print("Digite o horário (ex: 14:30): ");
+            System.out.print("Digite o horário (das 08:00 às 20:00, a cada 30 min - ex: 14:30): ");
             horario = leitor.nextLine().trim();
-            if (horario.matches("([01][0-9]|2[0-3]):[0-5][0-9]")) {
-                break;
+
+            if (!horario.matches("([01][0-9]|2[0-3]):[0-5][0-9]")) {
+                System.out.println("Erro: Horário inválido! Use o padrão HH:MM.");
+                continue;
             }
-            System.out.println("Erro: Horário inválido! Use o padrão HH:MM.");
+
+            String[] partesHora = horario.split(":");
+            int hora = Integer.parseInt(partesHora[0]);
+            int minutos = Integer.parseInt(partesHora[1]);
+
+            if (hora < 8 || hora > 20 || (hora == 20 && minutos > 0)) {
+                System.out.println("Erro: Fora do horário de expediente! Funcionamos das 08:00 às 20:00.");
+                continue;
+            }
+
+            if (minutos != 0 && minutos != 30) {
+                System.out.println("Erro: Os agendamentos devem ser feitos de 30 em 30 minutos (ex: :00 ou :30).");
+                continue;
+            }
+
+            break;
         }
 
         if (!gerenciador.horarioDisponivel(dataFormatada, horario)) {
             System.out.println("\n❌ Erro: Esse horário já está ocupado por outro cliente nesta data!");
-            System.out.println("Agendamento cancelado. Tente iniciar o processo novamente escolhendo outro horário.");
             return null;
         }
 
@@ -164,4 +192,4 @@ public class Main {
                     " | Serviço: " + a.getServico());
         }
     }
-}
+}1

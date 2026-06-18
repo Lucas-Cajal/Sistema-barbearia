@@ -7,4 +7,7 @@ public interface AgendamentoRepository {
     boolean cancelar(String nomeCliente, String data, String horario);
     boolean horarioDisponivel(String data, String horario);
     ArrayList<Agendamento> getLista();
+
+    void travarData(String data, String recado);
+    String obterRecadoDaDataBloqueada(String data);
 }
