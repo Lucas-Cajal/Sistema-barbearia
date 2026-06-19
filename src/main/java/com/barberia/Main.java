@@ -22,51 +22,48 @@ public class Main {
 
             String opcao = leitor.nextLine().trim();
 
-            switch (opcao) {
-                case "1":
-                    System.out.println("\n--- Novo Agendamento ---");
-                    Cliente cliente = cadastrarCliente(leitor);
-                    Agendamento agendamento = cadastrarAgendamento(leitor, cliente, gerenciador);
-
-                    if (agendamento != null && gerenciador.adicionar(agendamento)) {
+            try {
+                switch (opcao) {
+                    case "1":
+                        System.out.println("\n--- Novo Agendamento ---");
+                        Cliente cliente = cadastrarCliente(leitor);
+                        Agendamento agendamento = cadastrarAgendamento(leitor, cliente);
+                        gerenciador.adicionar(agendamento);
                         System.out.println("\nAgendamento salvo com sucesso e gravado em disco!");
-                    }
-                    break;
-                case "2":
-                    exibirAgendamentos(gerenciador);
-                    break;
-                case "3":
-                    System.out.println("\n--- Cancelar Agendamento ---");
-                    System.out.print("Digite o nome exato do cliente: ");
-                    String nomeCancelamento = leitor.nextLine().trim();
+                        break;
+                    case "2":
+                        exibirAgendamentos(gerenciador);
+                        break;
+                    case "3":
+                        System.out.println("\n--- Cancelar Agendamento ---");
+                        System.out.print("Digite o nome exato do cliente: ");
+                        String nomeCancelamento = leitor.nextLine().trim();
+                        System.out.print("Digite a data (ex: 12/06): ");
+                        String dataCancelamento = leitor.nextLine().trim();
+                        System.out.print("Digite o horário (ex: 14:30): ");
+                        String horarioCancelamento = leitor.nextLine().trim();
 
-                    System.out.print("Digite a data (ex: 12/06): ");
-                    String dataCancelamento = leitor.nextLine().trim();
-
-                    System.out.print("Digite o horário (ex: 14:30): ");
-                    String horarioCancelamento = leitor.nextLine().trim();
-
-                    if (gerenciador.cancelar(nomeCancelamento, dataCancelamento, horarioCancelamento)) {
+                        gerenciador.cancelar(nomeCancelamento, dataCancelamento, horarioCancelamento);
                         System.out.println("\nAgendamento cancelado e removido do disco com sucesso!");
-                    } else {
-                        System.out.println("\nErro: Nenhum agendamento encontrado com esses dados.");
-                    }
-                    break;
-                case "4":
-                    System.out.println("\n--- Bloquear Data de Expediente ---");
-                    String dataTrava = validarFormatacaoData(leitor);
-                    System.out.print("Digite o recado/motivo do bloqueio: ");
-                    String recado = leitor.nextLine().trim();
-                    gerenciador.travarData(dataTrava, recado);
-                    System.out.println("\nAviso registrado! A data " + dataTrava + " está oficialmente bloqueada.");
-                    break;
-                case "5":
-                    System.out.println("\nSistema encerrado. Obrigado e bom trabalho!");
-                    executarSistema = false;
-                    break;
-                default:
-                    System.out.println("Erro: Opção inválida! Escolha um número de 1 a 5.");
-                    break;
+                        break;
+                    case "4":
+                        System.out.println("\n--- Bloquear Data de Expediente ---");
+                        String dataTrava = validarFormatacaoData(leitor);
+                        System.out.print("Digite o recado/motivo do bloqueio: ");
+                        String recado = leitor.nextLine().trim();
+                        gerenciador.travarData(dataTrava, recado);
+                        System.out.println("\nAviso registrado! A data " + dataTrava + " está oficialmente bloqueada.");
+                        break;
+                    case "5":
+                        System.out.println("\nSistema encerrado. Obrigado e bom trabalho!");
+                        executarSistema = false;
+                        break;
+                    default:
+                        System.out.println("Erro: Opção inválida! Escolha um número de 1 a 5.");
+                        break;
+                }
+            } catch (NegocioException e) {
+                System.out.println("\n❌ Erro de Validação: " + e.getMessage());
             }
         }
 
@@ -119,15 +116,8 @@ public class Main {
         }
     }
 
-    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente, AgendamentoRepository gerenciador) {
+    private static Agendamento cadastrarAgendamento(Scanner leitor, Cliente cliente) {
         String dataFormatada = validarFormatacaoData(leitor);
-
-        String recadoBloqueio = gerenciador.obterRecadoDaDataBloqueada(dataFormatada);
-        if (recadoBloqueio != null) {
-            System.out.println("\n🚫 Atenção: Esta data está fechada pelo barbeiro!");
-            System.out.println("Motivo: " + recadoBloqueio);
-            return null;
-        }
 
         String horario;
         while (true) {
@@ -154,11 +144,6 @@ public class Main {
             }
 
             break;
-        }
-
-        if (!gerenciador.horarioDisponivel(dataFormatada, horario)) {
-            System.out.println("\n❌ Erro: Esse horário já está ocupado por outro cliente nesta data!");
-            return null;
         }
 
         String servico;
@@ -192,4 +177,4 @@ public class Main {
                     " | Serviço: " + a.getServico());
         }
     }
-}1
+}

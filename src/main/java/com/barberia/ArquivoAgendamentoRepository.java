@@ -22,36 +22,35 @@ public class ArquivoAgendamentoRepository implements AgendamentoRepository {
     }
 
     @Override
-    public boolean adicionar(Agendamento agendamento) {
-        if (agendamento == null) return false;
+    public void adicionar(Agendamento agendamento) {
+        if (datasBloqueadas.containsKey(agendamento.getData())) {
+            throw new NegocioException("Esta data está fechada pelo barbeiro: " + datasBloqueadas.get(agendamento.getData()));
+        }
+        if (!horarioDisponivel(agendamento.getData(), agendamento.getHorario())) {
+            throw new NegocioException("Esse horário já está ocupado por outro cliente nesta data!");
+        }
         listaAgendamentos.add(agendamento);
         salvarDadoNoArquivo(agendamento);
-        return true;
     }
 
     @Override
-    public boolean cancelar(String nomeCliente, String data, String horario) {
-        for (Agendamento a : listaAgendamentos) {
-            if (a.getCliente().getNome().equalsIgnoreCase(nomeCliente) &&
-                    a.getData().equals(data) &&
-                    a.getHorario().equals(horario)) {
+    public void cancelar(String nomeCliente, String data, String horario) {
+        boolean removido = listaAgendamentos.removeIf(a ->
+                a.getCliente().getNome().equalsIgnoreCase(nomeCliente) &&
+                        a.getData().equals(data) &&
+                        a.getHorario().equals(horario)
+        );
 
-                listaAgendamentos.remove(a);
-                atualizarArquivoCompleto();
-                return true;
-            }
+        if (!removido) {
+            throw new NegocioException("Nenhum agendamento encontrado com esses dados.");
         }
-        return false;
+        atualizarArquivoCompleto();
     }
 
     @Override
     public boolean horarioDisponivel(String data, String horario) {
-        for (Agendamento a : listaAgendamentos) {
-            if (a.getData().equals(data) && a.getHorario().equals(horario)) {
-                return false;
-            }
-        }
-        return true;
+        return listaAgendamentos.stream()
+                .noneMatch(a -> a.getData().equals(data) && a.getHorario().equals(horario));
     }
 
     @Override
@@ -71,7 +70,7 @@ public class ArquivoAgendamentoRepository implements AgendamentoRepository {
     }
 
     @Override
-    public String obterRecadoDaDataBloqueada(String data) {
+    public String obtenerRecadoDaDataBloqueada(String data) {
         return datasBloqueadas.get(data);
     }
 

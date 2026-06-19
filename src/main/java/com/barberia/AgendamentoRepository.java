@@ -3,11 +3,10 @@ package com.barberia;
 import java.util.ArrayList;
 
 public interface AgendamentoRepository {
-    boolean adicionar(Agendamento agendamento);
-    boolean cancelar(String nomeCliente, String data, String horario);
+    void adicionar(Agendamento agendamento);
+    void cancelar(String nomeCliente, String data, String horario);
     boolean horarioDisponivel(String data, String horario);
     ArrayList<Agendamento> getLista();
-
     void travarData(String data, String recado);
-    String obterRecadoDaDataBloqueada(String data);
+    String obtenerRecadoDaDataBloqueada(String data);
 }
